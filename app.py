@@ -14,11 +14,14 @@ load_dotenv()
 
 def _database_uri():
     uri = (
-        os.getenv('DATABASE_URL')
-        or os.getenv('POSTGRES_URL')
+        os.getenv('POSTGRES_URL')
+        or os.getenv('DATABASE_URL')
         or os.getenv('POSTGRES_PRISMA_URL')
-        or 'sqlite:///expensio.db'
     )
+    if not uri:
+        if os.getenv('VERCEL'):
+            raise RuntimeError('No Postgres database URL found. Set POSTGRES_URL or DATABASE_URL in Vercel environment variables.')
+        return 'sqlite:///expensio.db'
     if uri.startswith('postgres://'):
         uri = uri.replace('postgres://', 'postgresql://', 1)
     return uri
