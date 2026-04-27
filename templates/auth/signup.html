@@ -1,0 +1,307 @@
+{% extends "layout.html" %}
+
+{% block title %}Sign Up - Expensio{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="auth-shell">
+    <section class="auth-scene" id="signupScene" data-focus="username">
+        {% set side = 'left' %}
+        {% set character = 'boy' %}
+        {% include 'auth/_character.html' %}
+
+        <main class="auth-panel-wrap">
+            <div class="auth-panel">
+                <div class="auth-kicker">
+                    <i class="fas fa-star"></i>
+                    Interactive Signup
+                </div>
+                <div class="auth-heading">
+                    <h1>Create Your Account</h1>
+                    <p>The characters stay beside the form, greet you by name, and close their eyes when you enter secret fields.</p>
+                </div>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="auth-flashes">
+                            {% for category, message in messages %}
+                                <div class="flash-message flash-{{ category }}">{{ message }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
+                <form method="POST" action="{{ url_for('signup') }}" class="auth-form signup-grid" id="signupForm">
+                    <div class="field">
+                        <label for="username">Username</label>
+                        <i class="fas fa-user field-icon"></i>
+                        <input type="text" id="username" name="username" placeholder="Choose a username" required autocomplete="username" minlength="3" maxlength="20">
+                        <div class="validation-message" id="usernameValidation"></div>
+                    </div>
+
+                    <div class="field">
+                        <label for="email">Email</label>
+                        <i class="fas fa-envelope field-icon"></i>
+                        <input type="email" id="email" name="email" placeholder="your@email.com" required autocomplete="email">
+                        <div class="validation-message" id="emailValidation"></div>
+                    </div>
+
+                    <div class="field">
+                        <label for="password">Password</label>
+                        <i class="fas fa-lock field-icon"></i>
+                        <input type="password" id="password" name="password" placeholder="Create a password" required autocomplete="new-password" minlength="6">
+                        <button type="button" class="password-toggle" data-toggle-password="password" aria-label="Toggle password visibility">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <div class="password-strength" id="passwordStrength">
+                            <div class="strength-bar">
+                                <div class="strength-fill"></div>
+                            </div>
+                            <div class="strength-text">Password strength</div>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label for="confirm_password">Confirm Password</label>
+                        <i class="fas fa-lock field-icon"></i>
+                        <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirm your password" required autocomplete="new-password">
+                        <button type="button" class="password-toggle" data-toggle-password="confirm_password" aria-label="Toggle confirm password visibility">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <div class="validation-message" id="confirmValidation"></div>
+                    </div>
+
+                    <label class="terms-conditions full">
+                        <input type="checkbox" id="terms" name="terms" required>
+                        <span>I agree to the <a class="inline-link" href="#">Terms of Service</a> and <a class="inline-link" href="#">Privacy Policy</a>.</span>
+                    </label>
+
+                    <button type="submit" class="submit-btn full" id="signupBtn" disabled>
+                        <i class="fas fa-user-plus"></i>
+                        <span>Create Account</span>
+                    </button>
+                </form>
+
+                <div class="auth-footer">
+                    <p>Already registered? <a class="inline-link" href="{{ url_for('login') }}">Login here</a></p>
+                </div>
+
+                <div class="scene-caption">
+                    Username and email react with live messages, while password and confirm password switch the scene into privacy mode.
+                </div>
+            </div>
+        </main>
+
+        {% set side = 'right' %}
+        {% set character = 'girl' %}
+        {% include 'auth/_character.html' %}
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/auth-scene.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const signupForm = document.getElementById('signupForm');
+    const signupBtn = document.getElementById('signupBtn');
+    const passwordInput = document.getElementById('password');
+    const confirmInput = document.getElementById('confirm_password');
+    const passwordStrength = document.getElementById('passwordStrength');
+    const usernameInput = document.getElementById('username');
+    const emailInput = document.getElementById('email');
+    const termsInput = document.getElementById('terms');
+
+    let isUsernameValid = false;
+    let isEmailValid = false;
+    let isPasswordValid = false;
+    let isConfirmValid = false;
+    let isTermsAccepted = false;
+
+    initAuthScene({
+        sceneSelector: '#signupScene',
+        nameSelector: '#username',
+        passwordSelectors: ['#password', '#confirm_password'],
+        leftMessages: {
+            idle: 'Start with your username and I will greet you.',
+            username: 'Pick a username that feels like you.',
+            email: 'Add your email next.',
+            password: 'Eyes closed. Secret mode is on.',
+            confirm_password: 'Confirm it and we are almost done.',
+            namePrefix: 'Hi'
+        },
+        rightMessages: {
+            idle: 'Let us build your account.',
+            username: 'That name already gives the page some personality.',
+            email: 'Great, now add the email you want to use.',
+            password: 'Looking away while you type the password.',
+            confirm_password: 'One more password field and we are set.',
+            namePrefix: 'Welcome'
+        }
+    });
+
+    document.querySelectorAll('[data-toggle-password]').forEach(function (button) {
+        button.addEventListener('click', function () {
+            const input = document.getElementById(button.dataset.togglePassword);
+            const hidden = input.type === 'password';
+            input.type = hidden ? 'text' : 'password';
+            button.innerHTML = hidden ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
+        });
+    });
+
+    function setValidationMessage(element, isValid, message) {
+        element.textContent = message;
+        element.className = isValid ? 'validation-message valid-message' : 'validation-message invalid-message';
+    }
+
+    function clearValidationMessage(element) {
+        element.textContent = '';
+        element.className = 'validation-message';
+    }
+
+    function updateSubmitState() {
+        const allValid = isUsernameValid && isEmailValid && isPasswordValid && isConfirmValid && isTermsAccepted;
+        signupBtn.disabled = !allValid;
+    }
+
+    function validateUsername() {
+        const validationDiv = document.getElementById('usernameValidation');
+        const username = usernameInput.value.trim();
+
+        if (username.length < 3) {
+            usernameInput.classList.add('invalid');
+            usernameInput.classList.remove('valid');
+            setValidationMessage(validationDiv, false, 'Username must be at least 3 characters.');
+            isUsernameValid = false;
+        } else if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+            usernameInput.classList.add('invalid');
+            usernameInput.classList.remove('valid');
+            setValidationMessage(validationDiv, false, 'Use letters, numbers, or underscores only.');
+            isUsernameValid = false;
+        } else {
+            usernameInput.classList.add('valid');
+            usernameInput.classList.remove('invalid');
+            setValidationMessage(validationDiv, true, 'Username looks good.');
+            isUsernameValid = true;
+        }
+
+        updateSubmitState();
+    }
+
+    function validateEmail() {
+        const validationDiv = document.getElementById('emailValidation');
+        const email = emailInput.value.trim();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!emailRegex.test(email)) {
+            emailInput.classList.add('invalid');
+            emailInput.classList.remove('valid');
+            setValidationMessage(validationDiv, false, 'Enter a valid email address.');
+            isEmailValid = false;
+        } else {
+            emailInput.classList.add('valid');
+            emailInput.classList.remove('invalid');
+            setValidationMessage(validationDiv, true, 'Email format looks correct.');
+            isEmailValid = true;
+        }
+
+        updateSubmitState();
+    }
+
+    function validatePassword() {
+        const password = passwordInput.value;
+        let strength = 0;
+
+        if (password.length >= 8) strength++;
+        if (/[a-z]/.test(password)) strength++;
+        if (/[A-Z]/.test(password)) strength++;
+        if (/[0-9]/.test(password)) strength++;
+        if (/[^A-Za-z0-9]/.test(password)) strength++;
+
+        passwordStrength.className = 'password-strength';
+        const strengthText = passwordStrength.querySelector('.strength-text');
+
+        if (!password) {
+            strengthText.textContent = 'Password strength';
+        } else if (strength <= 2) {
+            passwordStrength.classList.add('strength-weak');
+            strengthText.textContent = 'Weak password';
+        } else if (strength <= 4) {
+            passwordStrength.classList.add('strength-medium');
+            strengthText.textContent = 'Medium strength';
+        } else {
+            passwordStrength.classList.add('strength-strong');
+            strengthText.textContent = 'Strong password';
+        }
+
+        isPasswordValid = password.length >= 6;
+        passwordInput.classList.toggle('valid', isPasswordValid);
+        passwordInput.classList.toggle('invalid', password.length > 0 && !isPasswordValid);
+
+        if (confirmInput.value) validateConfirmPassword();
+        updateSubmitState();
+    }
+
+    function validateConfirmPassword() {
+        const validationDiv = document.getElementById('confirmValidation');
+        const password = passwordInput.value;
+        const confirm = confirmInput.value;
+
+        if (!confirm) {
+            confirmInput.classList.remove('valid', 'invalid');
+            clearValidationMessage(validationDiv);
+            isConfirmValid = false;
+        } else if (password === confirm) {
+            confirmInput.classList.add('valid');
+            confirmInput.classList.remove('invalid');
+            setValidationMessage(validationDiv, true, 'Passwords match.');
+            isConfirmValid = true;
+        } else {
+            confirmInput.classList.add('invalid');
+            confirmInput.classList.remove('valid');
+            setValidationMessage(validationDiv, false, 'Passwords do not match.');
+            isConfirmValid = false;
+        }
+
+        updateSubmitState();
+    }
+
+    function validateTerms() {
+        isTermsAccepted = termsInput.checked;
+        updateSubmitState();
+    }
+
+    usernameInput.addEventListener('input', validateUsername);
+    emailInput.addEventListener('input', validateEmail);
+    passwordInput.addEventListener('input', validatePassword);
+    confirmInput.addEventListener('input', validateConfirmPassword);
+    termsInput.addEventListener('change', validateTerms);
+
+    signupForm.addEventListener('submit', function (event) {
+        validateUsername();
+        validateEmail();
+        validatePassword();
+        validateConfirmPassword();
+        validateTerms();
+
+        if (!(isUsernameValid && isEmailValid && isPasswordValid && isConfirmValid && isTermsAccepted)) {
+            event.preventDefault();
+            window.alert('Please fix the form errors before creating the account.');
+            return;
+        }
+
+        signupBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating account...';
+        signupBtn.disabled = true;
+    });
+
+    validateUsername();
+    validateEmail();
+    validatePassword();
+    validateConfirmPassword();
+    validateTerms();
+});
+</script>
+{% endblock %}

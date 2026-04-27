@@ -1,0 +1,138 @@
+{% extends "layout.html" %}
+
+{% block title %}Login - Expensio{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="auth-shell">
+    <section class="auth-scene" id="authScene" data-focus="username">
+        {% set side = 'left' %}
+        {% set character = 'boy' %}
+        {% include 'auth/_character.html' %}
+
+        <main class="auth-panel-wrap">
+            <div class="auth-panel">
+                <div class="auth-kicker">
+                    <i class="fas fa-star"></i>
+                    Interactive Login
+                </div>
+                <div class="auth-heading">
+                    <h1>Welcome Back</h1>
+                    <p>Type your username and the characters greet you. Type a password and they close their eyes for privacy.</p>
+                </div>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="auth-flashes">
+                            {% for category, message in messages %}
+                                <div class="flash-message flash-{{ category }}">{{ message }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
+                <form method="POST" action="{{ url_for('login') }}" class="auth-form" id="loginForm">
+                    <div class="field full">
+                        <label for="username">Username</label>
+                        <i class="fas fa-user field-icon"></i>
+                        <input type="text" id="username" name="username" placeholder="Enter your username" required autofocus autocomplete="username">
+                    </div>
+
+                    <div class="field full">
+                        <label for="password">Password</label>
+                        <i class="fas fa-lock field-icon"></i>
+                        <input type="password" id="password" name="password" placeholder="Enter your password" required autocomplete="current-password">
+                        <button type="button" class="password-toggle" data-toggle-password="password" aria-label="Toggle password visibility">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+
+                    <div class="form-meta">
+                        <label class="remember-me">
+                            <input type="checkbox" name="remember">
+                            Remember me
+                        </label>
+                        <a href="#" class="inline-link" id="forgotPasswordLink">Forgot password?</a>
+                    </div>
+
+                    <button type="submit" class="submit-btn" id="loginBtn">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span>Login</span>
+                    </button>
+                </form>
+
+                <div class="auth-footer">
+                    <p>Need an account? <a class="inline-link" href="{{ url_for('signup') }}">Create one here</a></p>
+                </div>
+
+                <div class="scene-caption">
+                    Both characters stand beside the form and shift slightly toward the field you are working in so the interaction feels guided instead of static.
+                </div>
+            </div>
+        </main>
+
+        {% set side = 'right' %}
+        {% set character = 'girl' %}
+        {% include 'auth/_character.html' %}
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/auth-scene.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const loginForm = document.getElementById('loginForm');
+    const loginBtn = document.getElementById('loginBtn');
+
+    initAuthScene({
+        sceneSelector: '#authScene',
+        nameSelector: '#username',
+        passwordSelectors: ['#password'],
+        leftMessages: {
+            idle: 'Type your username and I will greet you.',
+            username: 'Start with your username.',
+            password: 'Eyes closed. Your password stays private.',
+            namePrefix: 'Hi'
+        },
+        rightMessages: {
+            idle: 'I am ready when you are.',
+            username: 'Nice to see you here.',
+            password: 'Looking away until you finish typing.',
+            namePrefix: 'Welcome back'
+        }
+    });
+
+    document.querySelectorAll('[data-toggle-password]').forEach(function (button) {
+        button.addEventListener('click', function () {
+            const input = document.getElementById(button.dataset.togglePassword);
+            const hidden = input.type === 'password';
+            input.type = hidden ? 'text' : 'password';
+            button.innerHTML = hidden ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
+        });
+    });
+
+    document.getElementById('forgotPasswordLink').addEventListener('click', function (event) {
+        event.preventDefault();
+        window.alert('Forgot password flow is not implemented yet.');
+    });
+
+    loginForm.addEventListener('submit', function (event) {
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+
+        if (!username || !password) {
+            event.preventDefault();
+            window.alert('Please fill in both username and password.');
+            return;
+        }
+
+        loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
+        loginBtn.disabled = true;
+    });
+});
+</script>
+{% endblock %}
